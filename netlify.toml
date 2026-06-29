@@ -1,0 +1,27 @@
+# Netlify configuration for the e-waste SPA frontend.
+#
+# The app calls the API with relative /api/... paths (see client/lib/api.js and
+# client/context/AuthContext.jsx). In dev, Vite proxies /api -> VITE_API_URL.
+# In production, Netlify must do the same: forward /api/* to the Render backend.
+# Without this rule, /api/* hits Netlify itself and returns 404 (the login bug).
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# 1) Proxy API calls to the Render backend.
+#    status = 200 makes this a rewrite/proxy (same-origin to the browser, so no
+#    CORS preflight issues). It MUST come before the SPA catch-all below, since
+#    Netlify applies the first matching rule.
+[[redirects]]
+  from = "/api/*"
+  to = "https://e-waste-backend-ztk8.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# 2) SPA fallback: serve index.html for client-side routes (e.g. /login, /profile)
+#    so a direct visit or page refresh resolves to the React app instead of 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
